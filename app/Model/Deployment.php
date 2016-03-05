@@ -6,10 +6,6 @@ use DateTime;
 
 class Deployment
 {
-    const WEBHOOK_KEY = 'hex-predeployment-hook';
-    const FIRST_DEPLOYMENT_HOUR = 00;
-    const LAST_DEPLOYMENT_HOUR = 15;
-
     /**
      * Checks to see if we are able to deploy by checking the current time and
      * the agreed deployment hours defined as a constant
@@ -21,8 +17,8 @@ class Deployment
     {
         $date = new DateTime();
 
-        if ($date->format('H') >= self::FIRST_DEPLOYMENT_HOUR
-            && $date->format('H') <= self::LAST_DEPLOYMENT_HOUR) {
+        if ($date->format('H') >= env('DEPLOYMENT_HOUR_FROM')
+            && $date->format('H') <= env('DEPLOYMENT_HOUR_TO')) {
             return true;
         }
 
