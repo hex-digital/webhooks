@@ -13,7 +13,7 @@ class Deployment
      * @author Oliver Tappin <oliver@hexdigital.com>
      * @return bool Whether the deployment is allowed
      */
-    public function isDeploymentAllowed()
+    protected function isDeploymentAllowed()
     {
         $date = new DateTime();
 
@@ -26,28 +26,37 @@ class Deployment
     }
 
     /**
+     * Sends a notifiction to Slack to tell the developer we cannot deploy
+     * @author Oliver Tappin <oliver@hexdigital.com>
+     * @return void
+     */
+    protected function sendNotification()
+    {
+        $token    = env('SLACK_TOKEN');
+        $team     = env('SLACK_TEAM');
+        $username = env('SLACK_USERNAME');
+        $icon     = env('SLACK_DEPLOYMENT_ICON');
+
+        $message  = env('SLACK_DEPLOYMENT_MESSAGE');
+        $channel  = env('SLACK_DEPLOYMENT_CHANNEL');
+
+        $slack = new Slack($token, $team, $username, $icon);
+        $slack->send($message, $channel);
+    }
+
+    /**
      * Returns http headers depending on whether the deployment is allowed
      *
      * @author Oliver Tappin <oliver@hexdigital.com>
      * @return void
      */
-    public function returnHttpHeaders()
+    protected function returnHttpHeaders()
     {
         if ($this->isDeploymentAllowed()) {
             header('HTTP/1.1 200 OK');
         } else {
             header('HTTP/1.1 404 Not Found');
-
-            $token    = env('SLACK_TOKEN');
-            $team     = env('SLACK_TEAM');
-            $username = env('SLACK_USERNAME');
-            $icon     = env('SLACK_DEPLOYMENT_ICON');
-
-            $message  = env('SLACK_DEPLOYMENT_MESSAGE');
-            $channel  = env('SLACK_DEPLOYMENT_CHANNEL');
-
-            $slack = new Slack($token, $team, $username, $icon);
-            $slack->send($message, $channel);
+            $this->sendNotification();
         }
 
         exit;
