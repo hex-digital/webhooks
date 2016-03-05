@@ -6,8 +6,8 @@ class WebhookController extends Controller
 {
     public function handleWebhook($payload)
     {
-        $this->handleGithubPush();
-        $this->handleDeploybotDeployment();
+        $this->handleGithubPush($payload);
+        $this->handleDeploybotDeployment($payload);
     }
 
     /**
