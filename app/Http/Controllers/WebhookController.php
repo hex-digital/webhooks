@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Model\Deployment;
+
 class WebhookController extends Controller
 {
     public function handleWebhook($payload)
@@ -29,6 +31,7 @@ class WebhookController extends Controller
      */
     public function handleDeploybotDeployment($payload)
     {
-        // Handle The Event
+        $deployment = new Deployment();
+        $deployment->listen();
     }
 }
