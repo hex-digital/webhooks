@@ -71,9 +71,11 @@ class Github
      */
     protected function checkBranchName($payload)
     {
-        if (!isset($payload->ref)) return false;
+        if (!$branch = $payload->get('ref')) return false;
 
-        $branch = end(explode('/', $payload->ref));
+        $branch = explode('/', $branch);
+        $branch = end($branch);
+
         $message = env('SLACK_GITHUB_BRANCHING_MESSAGE');
 
         $branches = [
@@ -84,13 +86,13 @@ class Github
         ];
 
         $namingConventionBranches = [
-            'change-%d',
-            'feature-%d',
-            'hotfix-%d'
+            'change',
+            'feature',
+            'hotfix'
         ];
 
         if (!in_array($branch, $branches)
-            && strpos($branch, $namingConventionBranches) === false) {
+            && strpos($branch, $namingConventionBranches . '-') === false) {
             sendNotification($message);
             return false;
         }
