@@ -16,3 +16,4 @@ $app->get('/', function () use ($app) {
 });
 
 $app->get('webhook/{hash}', 'WebhookController@handleWebhook');
+$app->post('webhook/{hash}', 'WebhookController@handleWebhook');
