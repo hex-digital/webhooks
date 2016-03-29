@@ -72,11 +72,9 @@ class Github
     protected function checkBranchName($payload)
     {
         if (!$branch = $payload->get('ref')) return false;
+        $branch = substr($branch, strlen('refs/heads/'));
 
-        $branch = explode('/', $branch);
-        $branch = end($branch);
-
-        $message = env('SLACK_GITHUB_BRANCHING_MESSAGE');
+        $failed = 0;
 
         $branches = [
             'master',
@@ -85,15 +83,26 @@ class Github
             'development'
         ];
 
-        $namingConventionBranches = [
+        $namedBranches = [
             'change',
             'feature',
             'hotfix'
         ];
 
-        if (!in_array($branch, $branches)
-            && strpos($branch, $namingConventionBranches . '-') === false) {
-            sendNotification($message);
+        if (!in_array($branch, $branches)) {
+            foreach ($namedBranches as $namedBranch) {
+                if (strpos($branch, $namedBranch . '-') === false) $failed++;
+
+                $branchIdentifier = explode('-', $branch);
+                $branchIdentifier = end($branchIdentifier);
+                if ((int) $branchIdentifier === 0) $failed++;
+            }
+        }
+
+        if ($failed > 0) {
+            $message = env('SLACK_GITHUB_BRANCHING_MESSAGE');
+            $this->sendNotification($message);
+
             return false;
         }
 
