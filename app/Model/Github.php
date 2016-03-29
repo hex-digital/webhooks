@@ -93,14 +93,16 @@ class Github
             foreach ($namedBranches as $namedBranch) {
                 if (strpos($branch, $namedBranch . '-') === false) $failed++;
 
-                $branchIdentifier = explode('-', $branch);
-                $branchIdentifier = end($branchIdentifier);
-                if ((int) $branchIdentifier === 0) $failed++;
+                if (strpos('-', $branch) !== false) {
+                    $branchIdentifier = explode('-', $branch);
+                    $branchIdentifier = end($branchIdentifier);
+                    if ((int) $branchIdentifier === 0) $failed++;
+                }
             }
         }
 
         if ($failed > 0) {
-            $message = env('SLACK_GITHUB_BRANCHING_MESSAGE');
+            $message = sprintf(env('SLACK_GITHUB_BRANCHING_MESSAGE'), $branch);
             $this->sendNotification($message);
 
             return false;
