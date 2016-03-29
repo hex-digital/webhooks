@@ -17,7 +17,8 @@ class WebhookController extends Controller
     /**
      * Handle a GitHub webhook.
      *
-     * @param  array  $payload
+     * @author Oliver Tappin <oliver@hexdigital.com>
+     * @param  Request  $request
      * @return Response
      */
     public function handleGithubPush(Request $request)
@@ -29,7 +30,8 @@ class WebhookController extends Controller
     /**
      * Handle a DeployBot webhook.
      *
-     * @param  array  $payload
+     * @author Oliver Tappin <oliver@hexdigital.com>
+     * @param  Request  $request
      * @return Response
      */
     public function handleDeploybotDeployment(Request $request)
