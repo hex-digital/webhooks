@@ -27,48 +27,127 @@ class Github
     }
 
     /**
-     * Sends a notifiction to Slack to tell the developer we cannot deploy
+     * Sends a notifiction to Slack to tell the developer the error
      *
      * @author Oliver Tappin <oliver@hexdigital.com>
      * @return void
      */
-    protected function sendNotification()
+    protected function sendNotification($message)
     {
         $token    = env('SLACK_TOKEN');
         $team     = env('SLACK_TEAM');
         $username = env('SLACK_USERNAME');
-        $icon     = env('SLACK_DEPLOYMENT_ICON');
-
-        $message  = env('SLACK_DEPLOYMENT_MESSAGE');
-        $channel  = env('SLACK_DEPLOYMENT_CHANNEL');
+        $icon     = env('SLACK_GITHUB_ICON');
+        $channel  = env('SLACK_GITHUB_CHANNEL');
 
         $slack = new Slack($token, $team, $username, $icon);
         $slack->send($message, $channel);
     }
 
     /**
-     * Listens for the predeployment hook
-     *
-     * This method is used to check the current deployment state. If we are
-     * allowed to deploy, this will return a HTTP 200 page, otherwise a 404
-     * page. This stops deployments from happening outside agreed times.
+     * Returns http headers depending on whether the deployment is allowed
      *
      * @author Oliver Tappin <oliver@hexdigital.com>
+     * @param  boolean  $delivered
+     * @return void
+     */
+    protected function returnDeliveryStatus($delivered)
+    {
+        if ($delivered) {
+            header('HTTP/1.1 200 OK');
+        } else {
+            header('HTTP/1.1 404 Not Found');
+        }
+
+        exit;
+    }
+
+    /**
+     * Checks the branch name against the Git Flow naming conventions
+     *
+     * @author Oliver Tappin <oliver@hexdigital.com>
+     * @param  string $branch The name of the branch
+     * @return boolean  Whether the branch name is valid
+     */
+    protected function checkBranchName($branch)
+    {
+        $message = env('SLACK_GITHUB_BRANCHING_MESSAGE');
+
+        $branches = [
+            'master',
+            'production',
+            'staging',
+            'development'
+        ];
+
+        $namingConventionBranches = [
+            'change-%d',
+            'feature-%d',
+            'hotfix-%d'
+        ]
+
+        if (!in_array($branch, $branches)
+            && strpos($branch, $namingConventionBranches) === false) {
+            sendNotification($message);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Runs the relevant checks using the payload data
+     *
+     * @author Oliver Tappin <oliver@hexdigital.com>
+     * @param  object  $payload The payload data sent from GitHub
+     * @return boolean Whether all checks ran successfully or not
+     */
+    protected function runChecks($payload)
+    {
+        $failed = 0;
+
+        // Check naming conventions for new branches
+        $branch = end(explode('/', $payload->ref));
+        if (!checkBranchName($branch)) $failed++;
+
+        // Check to see if the task exists in external task monitoring system
+        // ...
+
+        // Check for conflict messages in the changed files
+        // ...
+
+        // Check for pull request merges into development only
+        // ...
+
+        // Check for normal merges into staging and production only
+        // ...
+
+        return ($failed === 0);
+    }
+
+    /**
+     * Listens for the GitHub hook
+     *
+     * This method is used to read the payload data sent from GitHub
+     * after an event. Upon successful delivery, this will return a
+     * HTTP 200 page, otherwise a 404 page upon failure. This tells
+     * GitHub whether the payload could be delivered or not.
+     *
+     * @author Oliver Tappin <oliver@hexdigital.com>
+     * @param  Request  $request
      * @return void
      */
     public function listen(Request $request)
     {
+        $delivered = false;
         $webhook = app('request')->route()[2]['hash'];
 
-        if ($webhook == env('GITHUB_WEBHOOK_URL')) {
-
-            // if ($request->isJson()) {}
-
-            file_put_contents(realpath(__DIR__ . '/../../storage/logs') . '/output.txt', print_r($request->json()->all(), true));
-            dd($request->json()->all());
-
+        if ($webhook == env('GITHUB_WEBHOOK_URL')
+            && $request->isJson()) {
+            $payload = $request->json();
+            $delivered = $this->runChecks($payload);
         }
 
-        return true;
+        $this->returnDeliveryStatus($delivered);
     }
 }
