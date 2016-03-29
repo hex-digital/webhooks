@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Model\Deployment;
+use App\Model\Github;
+use Illuminate\Http\Request;
 
 class WebhookController extends Controller
 {
-    public function handleWebhook($payload)
+    public function handleWebhook(Request $request)
     {
-        $this->handleGithubPush($payload);
-        $this->handleDeploybotDeployment($payload);
+        $this->handleGithubPush($request);
+        $this->handleDeploybotDeployment($request);
     }
 
     /**
@@ -18,9 +20,10 @@ class WebhookController extends Controller
      * @param  array  $payload
      * @return Response
      */
-    public function handleGithubPush($payload)
+    public function handleGithubPush(Request $request)
     {
-        // Handle The Event
+        $github = new Github();
+        $github->listen($request);
     }
 
     /**
@@ -29,7 +32,7 @@ class WebhookController extends Controller
      * @param  array  $payload
      * @return Response
      */
-    public function handleDeploybotDeployment($payload)
+    public function handleDeploybotDeployment(Request $request)
     {
         $deployment = new Deployment();
         $deployment->listen();
