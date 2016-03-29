@@ -66,11 +66,14 @@ class Github
      * Checks the branch name against the Git Flow naming conventions
      *
      * @author Oliver Tappin <oliver@hexdigital.com>
-     * @param  string $branch The name of the branch
+     * @param  object  $payload The payload sent from GitHub
      * @return boolean  Whether the branch name is valid
      */
-    protected function checkBranchName($branch)
+    protected function checkBranchName($payload)
     {
+        if (!isset($payload->ref)) return false;
+
+        $branch = end(explode('/', $payload->ref));
         $message = env('SLACK_GITHUB_BRANCHING_MESSAGE');
 
         $branches = [
@@ -84,7 +87,7 @@ class Github
             'change-%d',
             'feature-%d',
             'hotfix-%d'
-        ]
+        ];
 
         if (!in_array($branch, $branches)
             && strpos($branch, $namingConventionBranches) === false) {
@@ -107,8 +110,7 @@ class Github
         $failed = 0;
 
         // Check naming conventions for new branches
-        $branch = end(explode('/', $payload->ref));
-        if (!checkBranchName($branch)) $failed++;
+        if (!$this->checkBranchName($payload)) $failed++;
 
         // Check to see if the task exists in external task monitoring system
         // ...
