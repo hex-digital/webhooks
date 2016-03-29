@@ -28,6 +28,7 @@ class Github
 
     /**
      * Sends a notifiction to Slack to tell the developer we cannot deploy
+     *
      * @author Oliver Tappin <oliver@hexdigital.com>
      * @return void
      */
@@ -46,24 +47,6 @@ class Github
     }
 
     /**
-     * Returns http headers depending on whether the deployment is allowed
-     *
-     * @author Oliver Tappin <oliver@hexdigital.com>
-     * @return void
-     */
-    protected function returnHttpHeaders()
-    {
-        if ($this->isDeploymentAllowed()) {
-            header('HTTP/1.1 200 OK');
-        } else {
-            header('HTTP/1.1 404 Not Found');
-            $this->sendNotification();
-        }
-
-        exit;
-    }
-
-    /**
      * Listens for the predeployment hook
      *
      * This method is used to check the current deployment state. If we are
@@ -77,10 +60,15 @@ class Github
     {
         $webhook = app('request')->route()[2]['hash'];
 
-        file_put_contents(realpath(__DIR__ . '/../../storage/logs') . '/output.txt', print_r($request->all(), true));
-
         if ($webhook == env('GITHUB_WEBHOOK_URL')) {
-            $this->returnHttpHeaders();
+
+            // if ($request->isJson()) {}
+
+            file_put_contents(realpath(__DIR__ . '/../../storage/logs') . '/output.txt', print_r($request->json()->all(), true));
+            dd($request->json()->all());
+
         }
+
+        return true;
     }
 }
