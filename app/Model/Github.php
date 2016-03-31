@@ -8,25 +8,6 @@ use Illuminate\Http\Request;
 class Github
 {
     /**
-     * Checks to see if we are able to deploy by checking the current time and
-     * the agreed deployment hours defined as a constant
-     *
-     * @author Oliver Tappin <oliver@hexdigital.com>
-     * @return bool Whether the deployment is allowed
-     */
-    protected function isDeploymentAllowed()
-    {
-        $date = new DateTime();
-
-        if ($date->format('H') >= env('DEPLOYMENT_HOUR_FROM')
-            && $date->format('H') <= env('DEPLOYMENT_HOUR_TO')) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * Sends a notifiction to Slack to tell the developer the error
      *
      * @author Oliver Tappin <oliver@hexdigital.com>
@@ -173,15 +154,14 @@ class Github
      */
     public function listen(Request $request)
     {
-        $delivered = false;
-        $webhook = app('request')->route()[2]['hash'];
+        $webhook = $request->route()[2]['hash'];
+        $event = $request->header('X-GitHub-Event');
 
-        if ($webhook == env('GITHUB_WEBHOOK_URL')
+        if ($webhook == env('GITHUB_WEBHOOK_URL'
+            && $event == 'push')
             && $request->isJson()) {
             $payload = $request->json();
-            $delivered = $this->runChecks($payload);
+            $this->returnDeliveryStatus($this->runChecks($payload));
         }
-
-        $this->returnDeliveryStatus($delivered);
     }
 }
