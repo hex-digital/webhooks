@@ -137,6 +137,9 @@ class Github
         // Check for normal merges into staging and production only
         // ...
 
+        // Check commit messages start with a capital letter
+        // ...
+
         return ($failed === 0);
     }
 
