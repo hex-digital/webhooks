@@ -15,5 +15,4 @@ $app->get('/', function () use ($app) {
     return $app->version();
 });
 
-$app->get('webhook/{hash}', 'WebhookController@handleWebhook');
 $app->post('webhook/{hash}', 'WebhookController@handleWebhook');
