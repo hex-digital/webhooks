@@ -67,7 +67,7 @@ class Github
      *
      * @author Oliver Tappin <oliver@hexdigital.com>
      * @param  object  $payload The payload sent from GitHub
-     * @return boolean  Whether the branch name is valid
+     * @return boolean Whether the branch name is valid
      */
     protected function checkBranchName($payload)
     {
@@ -109,6 +109,22 @@ class Github
         }
 
         return true;
+    }
+
+    /**
+     * Checks modified files (ideally just the diff) for any conflict messages
+     *
+     * This helps prevent any production syntax errors or issues later on down
+     * the line where a developer may have accidently committed conflict
+     * messages after fixing a conflict locally.
+     *
+     * @author Oliver Tappin <oliver@hexdigital.com>
+     * @param  object  $payload The payload sent from GitHub
+     * @return boolean Whether files contained conflict messages or not
+     */
+    protected function checkForConflictMessages($payload)
+    {
+
     }
 
     /**
