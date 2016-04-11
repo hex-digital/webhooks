@@ -44,6 +44,22 @@ class Github
     }
 
     /**
+     * Returns the branch name from the GitHub payload
+     *
+     * @author Oliver Tappin <oliver@hexdigital.com>
+     * @param  object  $payload The payload sent from GitHub
+     * @return string|false  The name of the branch or false upon failure
+     */
+    protected function getBranchName($payload)
+    {
+        if (!$branch = $payload->get('ref')) {
+            return false;
+        }
+
+        return substr($branch, strlen('refs/heads/'));
+    }
+
+    /**
      * Checks the branch name against the Git Flow naming conventions
      *
      * @author Oliver Tappin <oliver@hexdigital.com>
@@ -52,8 +68,7 @@ class Github
      */
     protected function checkBranchName($payload)
     {
-        if (!$branch = $payload->get('ref')) return false;
-        $branch = substr($branch, strlen('refs/heads/'));
+        if (!$branch = $this->getBranchName($payload)) return false;
 
         $failed = 0;
 
@@ -105,7 +120,37 @@ class Github
      */
     protected function checkForConflictMessages($payload)
     {
+        if (!$branch = $this->getBranchName($payload)) return false;
 
+        $failed = 0;
+        $files = [];
+
+        $commits = $payload->get('commits');
+
+        foreach ($commits as $commit) {
+
+            foreach ($commit['added'] as $added) {
+                $files[] = $added;
+            }
+
+            foreach ($commit['modified'] as $modified) {
+                $files[] = $modified;
+            }
+
+        }
+
+        // Save files to memory
+
+        // Check files for conflict messages
+
+        if ($failed > 0) {
+            $message = sprintf(env('SLACK_GITHUB_CONFLICT_MESSAGE'), $branch);
+            $this->sendNotification($message);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -126,7 +171,7 @@ class Github
         // ...
 
         // Check for conflict messages in the changed files
-        // ...
+        if (!$this->checkForConflictMessages($payload)) $failed++;
 
         // Check for pull request merges into development only
         // ...
@@ -157,8 +202,8 @@ class Github
         $webhook = $request->route()[2]['hash'];
         $event = $request->header('X-GitHub-Event');
 
-        if ($webhook == env('GITHUB_WEBHOOK_URL'
-            && $event == 'push')
+        if ($webhook == env('GITHUB_WEBHOOK_URL')
+            && $event == 'push'
             && $request->isJson()) {
             $payload = $request->json();
             $this->returnDeliveryStatus($this->runChecks($payload));
