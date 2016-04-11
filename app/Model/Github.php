@@ -171,7 +171,7 @@ class Github
         // ...
 
         // Check for conflict messages in the changed files
-        if (!$this->checkForConflictMessages($payload)) $failed++;
+        // if (!$this->checkForConflictMessages($payload)) $failed++;
 
         // Check for pull request merges into development only
         // ...
