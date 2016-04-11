@@ -86,15 +86,28 @@ class Github
         ];
 
         if (!in_array($branch, $branches)) {
-            foreach ($namedBranches as $namedBranch) {
-                if (strpos($branch, $namedBranch . '-') === false) $failed++;
 
-                if (strpos('-', $branch) !== false) {
-                    $branchIdentifier = explode('-', $branch);
-                    $branchIdentifier = end($branchIdentifier);
-                    if ((int) $branchIdentifier === 0) $failed++;
-                }
+            $namedBranchCheck = 0;
+            $branchIdentifierCheck = 0;
+
+            // Check to see if the dash exists in the branch name
+            if (strpos($branch, '-') === false) $failed++;
+
+            // Get the branch parts and identifier
+            $branchParts = explode('-', $branch);
+            $branchIdentifier = end($branchParts);
+
+            // Check if the branch ends in an integer
+            if ((int) $branchIdentifier > 0) $branchIdentifierCheck++;
+
+            // Check the first part of the branch matches naming conventions
+            foreach ($namedBranches as $namedBranch) {
+                if ($branchParts[0] == $namedBranch) $namedBranchCheck++;
             }
+
+            if ($namedBranchCheck === 0) $failed++;
+            if ($branchIdentifierCheck === 0) $failed++;
+
         }
 
         if ($failed > 0) {
