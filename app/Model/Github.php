@@ -82,7 +82,8 @@ class Github
         $namedBranches = [
             'change',
             'feature',
-            'hotfix'
+            'hotfix',
+            'release'
         ];
 
         if (!in_array($branch, $branches)) {
